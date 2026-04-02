@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session
 import sqlite3
 import random
 import smtplib
+import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -24,7 +25,8 @@ CREATE TABLE IF NOT EXISTS users (
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS history (
     username TEXT,
-    action TEXT
+    action TEXT,
+    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 """)
 
@@ -33,8 +35,8 @@ conn.commit()
 
 # 🔹 Send OTP Email
 def send_otp_email(receiver_email, otp):
-    sender_email = "pavani10072005gmail@gmail.com"
-    app_password = "ptpvgduinbkurkxc"   # 🔐 paste here (no spaces)
+    sender_email = os.getenv("EMAIL_USER")
+    app_password = os.getenv("EMAIL_PASS")
 
     message = f"Subject: OTP Verification\n\nYour OTP is: {otp}"
 
@@ -50,7 +52,11 @@ def send_otp_email(receiver_email, otp):
 def login():
     if request.method == "POST":
         username = request.form["username"]
-        pin = int(request.form["pin"])
+
+        try:
+            pin = int(request.form["pin"])
+        except:
+            return "PIN must be a number"
 
         cursor.execute("SELECT * FROM users WHERE username=?", (username,))
         user = cursor.fetchone()
@@ -59,14 +65,18 @@ def login():
             return "User not found"
 
         if user[4] == 1:
-            return "Account locked"
+            return "Account is locked"
 
         if pin == user[1]:
             otp = random.randint(1000, 9999)
             session["otp"] = otp
             session["temp_user"] = username
 
-            send_otp_email(username, otp)  # 📧 send OTP
+            # reset attempts after success
+            cursor.execute("UPDATE users SET attempts=0 WHERE username=?", (username,))
+            conn.commit()
+
+            send_otp_email(username, otp)
 
             return redirect("/verify")
 
@@ -89,7 +99,10 @@ def login():
 @app.route("/verify", methods=["GET", "POST"])
 def verify():
     if request.method == "POST":
-        user_otp = int(request.form["otp"])
+        try:
+            user_otp = int(request.form["otp"])
+        except:
+            return "Invalid OTP format"
 
         if user_otp == session.get("otp"):
             session["user"] = session.get("temp_user")
@@ -105,8 +118,15 @@ def verify():
 def register():
     if request.method == "POST":
         username = request.form["username"]
-        pin = int(request.form["pin"])
-        balance = int(request.form["balance"])
+
+        try:
+            pin = int(request.form["pin"])
+            balance = int(request.form["balance"])
+        except:
+            return "PIN and Balance must be numbers"
+
+        if balance < 0:
+            return "Balance cannot be negative"
 
         cursor.execute("SELECT * FROM users WHERE username=?", (username,))
         if cursor.fetchone():
@@ -133,12 +153,22 @@ def dashboard():
 
     if request.method == "POST":
         action = request.form["action"]
-        amount = int(request.form.get("amount", 0))
+
+        try:
+            amount = int(request.form.get("amount", 0))
+        except:
+            return "Invalid amount"
 
         if action == "deposit":
             if amount > 0:
-                cursor.execute("UPDATE users SET balance = balance + ? WHERE username=?", (amount, username))
-                cursor.execute("INSERT INTO history VALUES (?, ?)", (username, f"Deposited {amount}"))
+                cursor.execute(
+                    "UPDATE users SET balance = balance + ? WHERE username=?",
+                    (amount, username)
+                )
+                cursor.execute(
+                    "INSERT INTO history (username, action) VALUES (?, ?)",
+                    (username, f"Deposited {amount}")
+                )
             else:
                 return "Invalid amount"
 
@@ -153,15 +183,21 @@ def dashboard():
             elif amount > bal:
                 return "Insufficient balance"
             else:
-                cursor.execute("UPDATE users SET balance = balance - ? WHERE username=?", (amount, username))
-                cursor.execute("INSERT INTO history VALUES (?, ?)", (username, f"Withdrew {amount}"))
+                cursor.execute(
+                    "UPDATE users SET balance = balance - ? WHERE username=?",
+                    (amount, username)
+                )
+                cursor.execute(
+                    "INSERT INTO history (username, action) VALUES (?, ?)",
+                    (username, f"Withdrew {amount}")
+                )
 
         conn.commit()
 
     cursor.execute("SELECT balance FROM users WHERE username=?", (username,))
     balance = cursor.fetchone()[0]
 
-    cursor.execute("SELECT action FROM history WHERE username=?", (username,))
+    cursor.execute("SELECT action, time FROM history WHERE username=?", (username,))
     history = cursor.fetchall()
 
     return render_template("dashboard.html", balance=balance, history=history)
@@ -170,7 +206,7 @@ def dashboard():
 # 🔓 LOGOUT
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
+    session.clear()
     return redirect("/")
 
 
