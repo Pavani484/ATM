@@ -7,11 +7,13 @@
 
 <body class="bg-dark d-flex justify-content-center align-items-center vh-100">
 
-<div class="card p-4" style="width: 300px;">
-    <h4 class="text-center">Enter OTP</h4>
+<div class="card p-4 shadow" style="width: 300px;">
+    <h4 class="text-center mb-3">🔐 Enter OTP</h4>
 
     <form method="post">
-        <input class="form-control mb-2" name="otp" placeholder="Enter OTP">
+        <!-- ✅ number + required -->
+        <input class="form-control mb-2" name="otp" type="number" placeholder="Enter OTP" required>
+
         <button class="btn btn-success w-100">Verify</button>
     </form>
 </div>

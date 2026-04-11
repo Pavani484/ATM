@@ -11,9 +11,14 @@
     <h3 class="text-center mb-3">🆕 Create Account</h3>
 
     <form method="post">
-        <input class="form-control mb-2" name="username" placeholder="Username">
-        <input class="form-control mb-2" name="pin" placeholder="PIN">
-        <input class="form-control mb-2" name="balance" placeholder="Initial Balance">
+        <!-- ✅ required -->
+        <input class="form-control mb-2" name="username" placeholder="Username" required>
+
+        <!-- ✅ number + required -->
+        <input class="form-control mb-2" name="pin" type="number" placeholder="PIN" required>
+
+        <!-- ✅ number + required -->
+        <input class="form-control mb-2" name="balance" type="number" placeholder="Initial Balance" required>
 
         <button class="btn btn-primary w-100">Register</button>
     </form>

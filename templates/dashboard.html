@@ -20,7 +20,8 @@
 
     <div class="card p-3 mt-3 bg-light text-dark">
         <form method="post">
-            <input class="form-control mb-2" name="amount" placeholder="Enter amount">
+            <!-- ✅ added type="number" -->
+            <input class="form-control mb-2" name="amount" type="number" placeholder="Enter amount" required>
 
             <button name="action" value="deposit" class="btn btn-success">Deposit</button>
             <button name="action" value="withdraw" class="btn btn-danger">Withdraw</button>
@@ -30,9 +31,20 @@
     <div class="card p-3 mt-3 bg-secondary">
         <h5>📜 Transaction History</h5>
         <ul class="list-group">
-            {% for h in history %}
-            <li class="list-group-item">{{ h[0] }}</li>
-            {% endfor %}
+
+            <!-- ✅ handle empty history -->
+            {% if history %}
+                {% for h in history %}
+                <li class="list-group-item">
+                    {{ h[0] }} <br>
+                    <!-- ✅ show time -->
+                    <small>{{ h[1] }}</small>
+                </li>
+                {% endfor %}
+            {% else %}
+                <li class="list-group-item">No transactions yet</li>
+            {% endif %}
+
         </ul>
     </div>
 
