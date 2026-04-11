@@ -1,18 +1,19 @@
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
 import random
-import smtplib
 import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"
+
+# ✅ DB PATH FIX
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "atm.db")
 
 conn = sqlite3.connect(db_path, check_same_thread=False)
 cursor = conn.cursor()
 
-# 🔹 Create Tables
+# ✅ CREATE TABLES
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     username TEXT PRIMARY KEY,
@@ -32,20 +33,6 @@ CREATE TABLE IF NOT EXISTS history (
 """)
 
 conn.commit()
-
-
-# 🔹 Send OTP Email
-def send_otp_email(receiver_email, otp):
-    sender_email = os.getenv("EMAIL_USER")
-    app_password = os.getenv("EMAIL_PASS")
-
-    message = f"Subject: OTP Verification\n\nYour OTP is: {otp}"
-
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(sender_email, app_password)
-    server.sendmail(sender_email, receiver_email, message)
-    server.quit()
 
 
 # 🔐 LOGIN
@@ -70,14 +57,14 @@ def login():
 
         if pin == user[1]:
             otp = random.randint(1000, 9999)
+
             session["otp"] = otp
             session["temp_user"] = username
 
-            # reset attempts after success
+            print("OTP:", otp)  # ✅ check in Render logs
+
             cursor.execute("UPDATE users SET attempts=0 WHERE username=?", (username,))
             conn.commit()
-
-            print("OTP:", otp)
 
             return redirect("/verify")
 
@@ -88,7 +75,7 @@ def login():
             if attempts >= 3:
                 cursor.execute("UPDATE users SET locked=1 WHERE username=?", (username,))
                 conn.commit()
-                return "Account locked due to 3 failed attempts"
+                return "Account locked"
 
             conn.commit()
             return "Incorrect PIN"
@@ -100,10 +87,18 @@ def login():
 @app.route("/verify", methods=["GET", "POST"])
 def verify():
     if request.method == "POST":
+
+        # ✅ SESSION CHECK (VERY IMPORTANT)
+        if "otp" not in session or "temp_user" not in session:
+            return "Session expired. Please login again."
+
         try:
             user_otp = int(request.form["otp"])
         except:
             return "Invalid OTP format"
+
+        print("Session OTP:", session.get("otp"))
+        print("User OTP:", user_otp)
 
         if user_otp == session.get("otp"):
             session["user"] = session.get("temp_user")
@@ -175,7 +170,12 @@ def dashboard():
 
         elif action == "withdraw":
             cursor.execute("SELECT balance FROM users WHERE username=?", (username,))
-            bal = cursor.fetchone()[0]
+            result = cursor.fetchone()
+
+            if not result:
+                return "User not found"
+
+            bal = result[0]
 
             if amount <= 0:
                 return "Invalid amount"
@@ -196,7 +196,12 @@ def dashboard():
         conn.commit()
 
     cursor.execute("SELECT balance FROM users WHERE username=?", (username,))
-    balance = cursor.fetchone()[0]
+    result = cursor.fetchone()
+
+    if not result:
+        return "User not found"
+
+    balance = result[0]
 
     cursor.execute("SELECT action, time FROM history WHERE username=?", (username,))
     history = cursor.fetchall()
