@@ -9,40 +9,56 @@
 
 <div class="container mt-5">
 
-    <div class="d-flex justify-content-between">
+    <!-- 🔝 Header -->
+    <div class="d-flex justify-content-between align-items-center">
         <h3>💳 Welcome</h3>
         <a href="/logout" class="btn btn-danger">Logout</a>
     </div>
 
+    <!-- 💰 Balance -->
     <div class="card p-3 mt-3 bg-secondary">
         <h4>Balance: ₹ {{ balance }}</h4>
     </div>
 
+    <!-- 💸 Deposit / Withdraw -->
     <div class="card p-3 mt-3 bg-light text-dark">
         <form method="post">
-            <!-- ✅ added type="number" -->
-            <input class="form-control mb-2" name="amount" type="number" placeholder="Enter amount" required>
+            <input
+                class="form-control mb-2"
+                name="amount"
+                type="number"
+                placeholder="Enter amount"
+                required
+            >
 
-            <button name="action" value="deposit" class="btn btn-success">Deposit</button>
-            <button name="action" value="withdraw" class="btn btn-danger">Withdraw</button>
+            <div class="d-flex gap-2">
+                <button name="action" value="deposit" class="btn btn-success w-100">
+                    Deposit
+                </button>
+                <button name="action" value="withdraw" class="btn btn-danger w-100">
+                    Withdraw
+                </button>
+            </div>
         </form>
     </div>
 
+    <!-- 📜 Transaction History -->
     <div class="card p-3 mt-3 bg-secondary">
         <h5>📜 Transaction History</h5>
+
         <ul class="list-group">
 
-            <!-- ✅ handle empty history -->
             {% if history %}
                 {% for h in history %}
                 <li class="list-group-item">
-                    {{ h[0] }} <br>
-                    <!-- ✅ show time -->
+                    <strong>{{ h[0] }}</strong><br>
                     <small>{{ h[1] }}</small>
                 </li>
                 {% endfor %}
             {% else %}
-                <li class="list-group-item">No transactions yet</li>
+                <li class="list-group-item text-center">
+                    No transactions yet
+                </li>
             {% endif %}
 
         </ul>
