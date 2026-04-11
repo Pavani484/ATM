@@ -6,9 +6,10 @@ import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(BASE_DIR, "atm.db")
 
-# 🔹 SQLite Connection
-conn = sqlite3.connect("atm.db", check_same_thread=False)
+conn = sqlite3.connect(db_path, check_same_thread=False)
 cursor = conn.cursor()
 
 # 🔹 Create Tables
@@ -76,7 +77,7 @@ def login():
             cursor.execute("UPDATE users SET attempts=0 WHERE username=?", (username,))
             conn.commit()
 
-            send_otp_email(username, otp)
+            print("OTP:", otp)
 
             return redirect("/verify")
 
@@ -212,4 +213,4 @@ def logout():
 
 # ▶️ RUN
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
