@@ -1,30 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Reset PIN</title>
+    <title>Verify Reset OTP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-dark d-flex justify-content-center align-items-center vh-100">
 
-<div class="card p-4 shadow" style="width: 320px;">
-    <h4 class="text-center mb-3">🔐 Reset PIN</h4>
+<div class="card p-4 shadow" style="width: 350px;">
+
+    <h4 class="text-center mb-3">🔐 Verify OTP</h4>
 
     <form method="post">
         <input
             class="form-control mb-3"
-            name="pin"
+            name="otp"
             type="number"
-            placeholder="Enter new PIN"
+            placeholder="Enter OTP"
             required
         >
 
-        <button class="btn btn-warning w-100">Reset PIN</button>
+        <button class="btn btn-success w-100">Verify</button>
     </form>
 
-    <p class="text-center mt-3">
-        <a href="/" class="text-decoration-none">Back to Login</a>
-    </p>
 </div>
 
 </body>

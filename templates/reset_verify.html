@@ -7,25 +7,39 @@
 
 <body class="bg-dark d-flex justify-content-center align-items-center vh-100">
 
-<div class="card p-4 shadow" style="width: 320px;">
+<div class="card p-4 shadow" style="width: 350px;">
 
     <h4 class="text-center mb-3">🔐 Verify OTP</h4>
 
+    <!-- 🔔 Error Message -->
+    {% if message %}
+        <div class="alert alert-danger text-center">
+            {{ message }}
+        </div>
+    {% endif %}
+
     <form method="post">
-        <!-- OTP Input -->
+
+        <!-- 🔢 OTP Input -->
         <input
             type="number"
             name="otp"
-            class="form-control mb-3"
+            class="form-control mb-3 text-center"
             placeholder="Enter OTP"
             required
         >
 
         <button class="btn btn-success w-100">Verify</button>
+
     </form>
 
-    <!-- Back -->
-    <p class="text-center mt-3">
+    <!-- ⏳ Info -->
+    <p class="text-center mt-3 text-muted">
+        OTP is valid for 2 minutes
+    </p>
+
+    <!-- 🔙 Back -->
+    <p class="text-center mt-2">
         <a href="/" class="text-decoration-none">Back to Login</a>
     </p>
 
