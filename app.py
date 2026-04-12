@@ -9,7 +9,7 @@ import time
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# ✅ Database setup
+# ✅ Database
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "atm.db")
 
@@ -36,14 +36,12 @@ CREATE TABLE IF NOT EXISTS history (
 
 conn.commit()
 
-
-# 📧 SEND OTP EMAIL
+# 📧 EMAIL OTP
 def send_otp_email(receiver_email, otp):
     sender_email = os.getenv("EMAIL_USER")
     app_password = os.getenv("EMAIL_PASS")
 
     if not sender_email or not app_password:
-        print("Email credentials not set")
         print("OTP:", otp)
         return
 
@@ -58,69 +56,55 @@ def send_otp_email(receiver_email, otp):
         server.login(sender_email, app_password)
         server.send_message(msg)
         server.quit()
-        print("OTP sent to:", receiver_email)
     except Exception as e:
         print("Email error:", e)
-
 
 # 🔐 LOGIN
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        # ✅ Get form data safely
         email = request.form.get("email")
         pin = request.form.get("pin")
 
-        # ✅ Validate input
         if not email or not pin:
-            return "Email and PIN are required"
+            return "Email and PIN required"
 
         try:
             pin = int(pin)
         except:
-            return "PIN must be a number"
+            return "PIN must be number"
 
-        # ✅ Fetch user
-        cursor.execute("SELECT * FROM users WHERE username=?", (email,))
+        cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
 
         if not user:
             return "User not found"
 
-        # ✅ Check account lock
         if user[4] == 1:
-            return "Account is locked"
+            return "Account locked"
 
-        # ✅ Check PIN
         if pin == user[1]:
-            # Generate OTP
             otp = random.randint(1000, 9999)
 
-            # Store in session
             session["otp"] = otp
+            session["otp_time"] = time.time()
             session["temp_user"] = email
 
-            # Reset attempts
-            cursor.execute("UPDATE users SET attempts=0 WHERE username=?", (email,))
+            cursor.execute("UPDATE users SET attempts=0 WHERE email=?", (email,))
             conn.commit()
 
-            # ✅ DEBUG (you can see OTP in logs)
-            print("OTP:", otp)
-
-            # OPTIONAL: Send email (enable later)
-            # send_otp_email(email, otp)
+            send_otp_email(email, otp)
 
             return redirect("/verify")
 
         else:
-            # ❌ Wrong PIN
             attempts = user[3] + 1
-            cursor.execute("UPDATE users SET attempts=? WHERE username=?", (attempts, email))
+            cursor.execute("UPDATE users SET attempts=? WHERE email=?", (attempts, email))
 
             if attempts >= 3:
-                cursor.execute("UPDATE users SET locked=1 WHERE username=?", (email,))
+                cursor.execute("UPDATE users SET locked=1 WHERE email=?", (email,))
                 conn.commit()
-                return "Account locked due to 3 failed attempts"
+                return "Account locked"
 
             conn.commit()
             return "Incorrect PIN"
@@ -135,9 +119,11 @@ def verify():
         if "otp" not in session or "temp_user" not in session:
             return "Session expired"
 
-        user_otp = int(request.form["otp"])
+        try:
+            user_otp = int(request.form["otp"])
+        except:
+            return "Invalid OTP"
 
-        # ⏳ OTP expiry (2 minutes)
         if time.time() - session["otp_time"] > 120:
             return "OTP expired"
 
@@ -149,16 +135,20 @@ def verify():
 
     return render_template("verify.html")
 
-
 # 🆕 REGISTER
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        email = request.form["email"]
+        email = request.form.get("email")
+        pin = request.form.get("pin")
+        balance = request.form.get("balance")
+
+        if not email or not pin or not balance:
+            return "All fields required"
 
         try:
-            pin = int(request.form["pin"])
-            balance = int(request.form["balance"])
+            pin = int(pin)
+            balance = int(balance)
         except:
             return "Invalid input"
 
@@ -166,16 +156,12 @@ def register():
         if cursor.fetchone():
             return "User already exists"
 
-        cursor.execute(
-            "INSERT INTO users (email, pin, balance) VALUES (?, ?, ?)",
-            (email, pin, balance)
-        )
+        cursor.execute("INSERT INTO users (email, pin, balance) VALUES (?, ?, ?)", (email, pin, balance))
         conn.commit()
 
         return redirect("/")
 
     return render_template("register.html")
-
 
 # 💳 DASHBOARD
 @app.route("/dashboard", methods=["GET", "POST"])
@@ -187,7 +173,11 @@ def dashboard():
 
     if request.method == "POST":
         action = request.form["action"]
-        amount = int(request.form.get("amount", 0))
+
+        try:
+            amount = int(request.form.get("amount", 0))
+        except:
+            return "Invalid amount"
 
         if action == "deposit" and amount > 0:
             cursor.execute("UPDATE users SET balance = balance + ? WHERE email=?", (amount, email))
@@ -211,19 +201,17 @@ def dashboard():
 
     return render_template("dashboard.html", balance=balance, history=history)
 
-
 # 🔓 LOGOUT
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
-
 # 🔑 FORGOT PIN
 @app.route("/forgot", methods=["GET", "POST"])
 def forgot():
     if request.method == "POST":
-        email = request.form["email"]
+        email = request.form.get("email")
 
         cursor.execute("SELECT * FROM users WHERE email=?", (email,))
         if not cursor.fetchone():
@@ -241,23 +229,28 @@ def forgot():
 
     return render_template("forgot.html")
 
-
-# 🔑 VERIFY RESET OTP
+# 🔑 RESET VERIFY
 @app.route("/reset-verify", methods=["GET", "POST"])
 def reset_verify():
     if request.method == "POST":
-        user_otp = int(request.form["otp"])
+
+        if "reset_otp" not in session:
+            return "Session expired"
+
+        try:
+            user_otp = int(request.form["otp"])
+        except:
+            return "Invalid OTP"
 
         if time.time() - session["reset_time"] > 120:
             return "OTP expired"
 
-        if user_otp == session.get("reset_otp"):
+        if user_otp == session["reset_otp"]:
             return redirect("/reset-pin")
         else:
             return "Invalid OTP"
 
     return render_template("reset_verify.html")
-
 
 # 🔑 RESET PIN
 @app.route("/reset-pin", methods=["GET", "POST"])
@@ -266,19 +259,20 @@ def reset_pin():
         return redirect("/")
 
     if request.method == "POST":
-        new_pin = int(request.form["pin"])
+        try:
+            new_pin = int(request.form["pin"])
+        except:
+            return "Invalid PIN"
+
         email = session["reset_user"]
 
         cursor.execute("UPDATE users SET pin=? WHERE email=?", (new_pin, email))
         conn.commit()
 
         session.clear()
-
         return "PIN reset successful! <a href='/'>Login</a>"
 
     return render_template("reset_pin.html")
 
-
-# ▶️ RUN
 if __name__ == "__main__":
     app.run()
