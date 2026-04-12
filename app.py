@@ -5,6 +5,7 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 import time
+import threading
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -92,8 +93,8 @@ def login():
 
             cursor.execute("UPDATE users SET attempts=0 WHERE email=?", (email,))
             conn.commit()
-
-            send_otp_email(email, otp)
+            threading.Thread(target=send_otp_email, args=(email, otp)).start()
+            # send_otp_email(email, otp)
 
             return redirect("/verify")
 
