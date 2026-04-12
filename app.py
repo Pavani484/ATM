@@ -67,50 +67,65 @@ def send_otp_email(receiver_email, otp):
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
+        # ✅ Get form data safely
+        email = request.form.get("email")
+        pin = request.form.get("pin")
+
+        # ✅ Validate input
+        if not email or not pin:
+            return "Email and PIN are required"
 
         try:
-            pin = int(request.form["pin"])
+            pin = int(pin)
         except:
-            return "PIN must be number"
+            return "PIN must be a number"
 
-        cursor.execute("SELECT * FROM users WHERE email=?", (email,))
+        # ✅ Fetch user
+        cursor.execute("SELECT * FROM users WHERE username=?", (email,))
         user = cursor.fetchone()
 
         if not user:
             return "User not found"
 
+        # ✅ Check account lock
         if user[4] == 1:
-            return "Account locked"
+            return "Account is locked"
 
+        # ✅ Check PIN
         if pin == user[1]:
+            # Generate OTP
             otp = random.randint(1000, 9999)
 
+            # Store in session
             session["otp"] = otp
             session["temp_user"] = email
-            session["otp_time"] = time.time()
 
-            send_otp_email(email, otp)
-
-            cursor.execute("UPDATE users SET attempts=0 WHERE email=?", (email,))
+            # Reset attempts
+            cursor.execute("UPDATE users SET attempts=0 WHERE username=?", (email,))
             conn.commit()
+
+            # ✅ DEBUG (you can see OTP in logs)
+            print("OTP:", otp)
+
+            # OPTIONAL: Send email (enable later)
+            # send_otp_email(email, otp)
 
             return redirect("/verify")
 
         else:
+            # ❌ Wrong PIN
             attempts = user[3] + 1
-            cursor.execute("UPDATE users SET attempts=? WHERE email=?", (attempts, email))
+            cursor.execute("UPDATE users SET attempts=? WHERE username=?", (attempts, email))
 
             if attempts >= 3:
-                cursor.execute("UPDATE users SET locked=1 WHERE email=?", (email,))
+                cursor.execute("UPDATE users SET locked=1 WHERE username=?", (email,))
                 conn.commit()
-                return "Account locked"
+                return "Account locked due to 3 failed attempts"
 
             conn.commit()
             return "Incorrect PIN"
 
     return render_template("login.html")
-
 
 # 🔐 VERIFY OTP
 @app.route("/verify", methods=["GET", "POST"])
