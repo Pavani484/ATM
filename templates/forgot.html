@@ -11,14 +11,14 @@
 
     <h4 class="text-center mb-3">🔑 Forgot PIN</h4>
 
+    {% if message %}
+        <div class="alert alert-warning text-center">
+            {{ message }}
+        </div>
+    {% endif %}
+
     <form method="post">
-        <input
-            class="form-control mb-3"
-            name="email"
-            type="email"
-            placeholder="Enter your email"
-            required
-        >
+        <input class="form-control mb-3" name="email" type="email" placeholder="Enter your email" required>
 
         <button class="btn btn-primary w-100">Send OTP</button>
     </form>
