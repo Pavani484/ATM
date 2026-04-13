@@ -47,26 +47,7 @@ conn.close()
 
 # 📧 SEND OTP
 def send_otp_email(receiver_email, otp):
-    sender_email = os.getenv("EMAIL_USER")
-    app_password = os.getenv("EMAIL_PASS")
-
-    if not sender_email or not app_password:
-        print("OTP:", otp)
-        return
-
-    msg = MIMEText(f"Your OTP is: {otp}")
-    msg["Subject"] = "ATM OTP Verification"
-    msg["From"] = sender_email
-    msg["To"] = receiver_email
-
-    try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(sender_email, app_password)
-        server.send_message(msg)
-        server.quit()
-    except Exception as e:
-        print("Email error:", e)
+    print("OTP:", otp)
 
 # 🔐 LOGIN
 @app.route("/", methods=["GET", "POST"])
