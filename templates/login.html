@@ -11,45 +11,27 @@
 
     <h3 class="text-center mb-3">🔐 Login</h3>
 
-    <!-- 🔔 Flash Messages (for errors/success later) -->
     {% if message %}
-        <div class="alert alert-warning text-center">
+        <div class="alert alert-danger text-center">
             {{ message }}
         </div>
     {% endif %}
 
     <form method="post">
 
-        <!-- 📧 Email -->
-        <input
-            class="form-control mb-3"
-            name="email"
-            type="email"
-            placeholder="Enter Email"
-            required
-        >
+        <input class="form-control mb-3" name="email" type="email" placeholder="Enter Email" required>
 
-        <!-- 🔑 PIN -->
-        <input
-            class="form-control mb-3"
-            name="pin"
-            type="password"
-            placeholder="Enter PIN"
-            required
-            minlength="4"
-        >
+        <input class="form-control mb-3" name="pin" type="password" placeholder="Enter PIN" required>
 
         <button class="btn btn-success w-100">Login</button>
 
     </form>
 
-    <!-- 🔑 Forgot PIN -->
     <p class="text-center mt-3">
-        <a href="/forgot" class="text-decoration-none">Forgot PIN?</a>
+        <a href="/forgot">Forgot PIN?</a>
     </p>
 
-    <!-- 🆕 Register -->
-    <p class="text-center mt-2 mb-1">Don't have an account?</p>
+    <p class="text-center mt-2">Don't have an account?</p>
     <a href="/register" class="btn btn-primary w-100">Register</a>
 
 </div>

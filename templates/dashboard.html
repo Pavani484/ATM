@@ -15,6 +15,13 @@
         <a href="/logout" class="btn btn-danger">Logout</a>
     </div>
 
+    <!-- 🔔 Message -->
+    {% if message %}
+    <div class="alert alert-info text-center mt-3">
+        {{ message }}
+    </div>
+    {% endif %}
+
     <!-- 💰 Balance -->
     <div class="card p-3 mt-3 bg-secondary">
         <h4>Current Balance: ₹ {{ balance }}</h4>
@@ -22,6 +29,8 @@
 
     <!-- 💸 Deposit / Withdraw -->
     <div class="card p-3 mt-3 bg-light text-dark">
+        <h5 class="mb-3">💸 Transaction</h5>
+
         <form method="post">
 
             <input
@@ -54,9 +63,9 @@
 
             {% if history %}
                 {% for h in history %}
-                <li class="list-group-item d-flex justify-content-between">
-                    <span>{{ h[0] }}</span>
-                    <small class="text-muted">{{ h[1] }}</small>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ h['action'] }}</span>
+                    <small class="text-muted">{{ h['time'] }}</small>
                 </li>
                 {% endfor %}
             {% else %}

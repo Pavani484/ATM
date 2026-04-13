@@ -11,7 +11,6 @@
 
     <h4 class="text-center mb-3">🔐 Verify OTP</h4>
 
-    <!-- 🔔 Error Message -->
     {% if message %}
         <div class="alert alert-danger text-center">
             {{ message }}
@@ -20,27 +19,18 @@
 
     <form method="post">
 
-        <!-- 🔢 OTP Input -->
-        <input
-            type="number"
-            name="otp"
-            class="form-control mb-3 text-center"
-            placeholder="Enter OTP"
-            required
-        >
+        <input type="number" name="otp" class="form-control mb-3 text-center" placeholder="Enter OTP" required>
 
         <button class="btn btn-success w-100">Verify</button>
 
     </form>
 
-    <!-- ⏳ Info -->
     <p class="text-center mt-3 text-muted">
-        OTP is valid for 2 minutes
+        OTP valid for 2 minutes
     </p>
 
-    <!-- 🔙 Back -->
     <p class="text-center mt-2">
-        <a href="/" class="text-decoration-none">Back to Login</a>
+        <a href="/">Back to Login</a>
     </p>
 
 </div>
