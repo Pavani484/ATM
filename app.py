@@ -93,8 +93,8 @@ def login():
 
             cursor.execute("UPDATE users SET attempts=0 WHERE email=?", (email,))
             conn.commit()
-            threading.Thread(target=send_otp_email, args=(email, otp)).start()
-            # send_otp_email(email, otp)
+            # threading.Thread(target=send_otp_email, args=(email, otp)).start()
+            send_otp_email(email, otp)
 
             return redirect("/verify")
 
